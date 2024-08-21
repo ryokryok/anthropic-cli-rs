@@ -40,43 +40,43 @@ pub mod v1 {
         }
 
         #[derive(Debug, Deserialize, Serialize)]
-        struct Content {
-            text: String,
+        pub struct Content {
+            pub text: String,
             #[serde(rename = "type")]
-            content_type: String,
+            pub content_type: String,
         }
 
         #[derive(Debug, Deserialize, Serialize)]
-        struct Usage {
-            input_tokens: usize,
-            output_tokens: usize,
+        pub struct Usage {
+            pub input_tokens: usize,
+            pub output_tokens: usize,
         }
 
         #[derive(Debug, Deserialize, Serialize)]
         pub struct SuccessResponseBody {
-            content: Vec<Content>,
-            id: String,
-            model: String,
-            role: String,
-            stop_reason: String,
-            stop_sequence: Option<String>,
+            pub content: Vec<Content>,
+            pub id: String,
+            pub model: String,
+            pub role: String,
+            pub stop_reason: String,
+            pub stop_sequence: Option<String>,
             #[serde(rename = "type")]
-            response_type: String,
-            usage: Usage,
+            pub response_type: String,
+            pub usage: Usage,
         }
 
         #[derive(Debug, Deserialize, Serialize)]
-        struct ErrorInfo {
+        pub struct ErrorInfo {
             #[serde(rename = "type")]
-            error_type: String,
-            message: String,
+            pub error_type: String,
+            pub message: String,
         }
 
         #[derive(Debug, Deserialize, Serialize)]
         pub struct ErrorResponseBody {
             #[serde(rename = "type")]
-            error_type: String,
-            error: ErrorInfo,
+            pub error_type: String,
+            pub error: ErrorInfo,
         }
 
         pub enum ApiResponse {
@@ -85,6 +85,27 @@ pub mod v1 {
         }
 
         const ANTHROPIC_URL: &str = "https://api.anthropic.com";
+
+        fn build_client(api_key: &str) -> Result<reqwest::Client, reqwest::Error> {
+            let mut headers: HeaderMap = HeaderMap::new();
+            headers.insert("x-api-key", api_key.parse().unwrap());
+            headers.insert("anthropic-version", "2023-06-01".parse().unwrap());
+            headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
+
+            let client = Client::builder().default_headers(headers).build()?;
+
+            Ok(client)
+        }
+
+        async fn parse_response_body(response: Response) -> Result<ApiResponse, reqwest::Error> {
+            if response.status().is_success() {
+                let success_body: SuccessResponseBody = response.json().await?;
+                Ok(ApiResponse::Success(success_body))
+            } else {
+                let error_body: ErrorResponseBody = response.json().await?;
+                Ok(ApiResponse::Error(error_body))
+            }
+        }
 
         pub struct ApiClient {
             client: Client,
@@ -109,27 +130,6 @@ pub mod v1 {
 
                 let response_body = parse_response_body(response).await?;
                 Ok(response_body)
-            }
-        }
-
-        fn build_client(api_key: &str) -> Result<reqwest::Client, reqwest::Error> {
-            let mut headers: HeaderMap = HeaderMap::new();
-            headers.insert("x-api-key", api_key.parse().unwrap());
-            headers.insert("anthropic-version", "2023-06-01".parse().unwrap());
-            headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
-
-            let client = Client::builder().default_headers(headers).build()?;
-
-            Ok(client)
-        }
-
-        async fn parse_response_body(response: Response) -> Result<ApiResponse, reqwest::Error> {
-            if response.status().is_success() {
-                let success_body: SuccessResponseBody = response.json().await?;
-                Ok(ApiResponse::Success(success_body))
-            } else {
-                let error_body: ErrorResponseBody = response.json().await?;
-                Ok(ApiResponse::Error(error_body))
             }
         }
     }
