@@ -1,0 +1,5 @@
+# Anthropic-cli
+
+## license
+
+MIT
