@@ -1,4 +1,4 @@
-# Anthropic-cli
+# anthropic-cli-rs
 
 ## license
 

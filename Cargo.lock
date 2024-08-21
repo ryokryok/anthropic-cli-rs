@@ -67,7 +67,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "anthropic-cli"
+name = "anthropic-cli-rs"
 version = "0.1.0"
 dependencies = [
  "clap",

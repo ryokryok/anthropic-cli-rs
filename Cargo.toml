@@ -1,7 +1,7 @@
 [package]
 edition = "2021"
 license = "MIT"
-name = "anthropic-cli"
+name = "anthropic-cli-rs"
 version = "0.1.0"
 
 [dependencies]
