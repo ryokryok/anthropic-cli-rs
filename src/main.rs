@@ -1,4 +1,4 @@
-use anthropic_cli::anthropic::v1::message::{ApiClient, ApiResponse, Message, RequestBody};
+use anthropic_cli_rs::anthropic::v1::message::{ApiClient, ApiResponse, Message, RequestBody};
 use dotenvy::dotenv;
 use reqwest;
 use std::env;
