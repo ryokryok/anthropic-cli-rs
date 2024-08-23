@@ -19,7 +19,8 @@ and replace `<YOUR_API_KEY>` with your Anthropic API keys.
 ## CLI
 
 ```shell
-cargo run
+# from project root
+cargo run cli
 ```
 
 ## license
