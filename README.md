@@ -9,7 +9,7 @@ Anthropic API Client
 ## prepare
 
 ```shell
-mv .env.sample mv .env
+mv .env.sample .env
 ```
 
 and replace `<YOUR_API_KEY>` with your Anthropic API keys.
