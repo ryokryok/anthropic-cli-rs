@@ -1,4 +1,4 @@
-use anthropic_cli_rs::anthropic::v1::message::{ApiClient, ApiResponse, Message, RequestBody};
+use anthropic_cli_rs::anthropic::{Anthropic, Message, MessageCreateParams, MessageParam};
 use dotenvy::dotenv;
 use reqwest;
 use std::env;
@@ -9,19 +9,19 @@ async fn main() -> Result<(), reqwest::Error> {
 
     let api_key = env::var("API_KEY").unwrap();
 
-    let client = ApiClient::new(&api_key)?;
+    let anthropic = Anthropic::new(&api_key)?;
 
-    let body = RequestBody::new(
+    let params = MessageCreateParams::new(
         "claude-3-5-sonnet-20240620",
         1024,
-        vec![Message::new("user", "Hello, world")],
+        vec![MessageParam::new("user", "Hello, world")],
     );
 
-    let response = client.send(body).await?;
+    let result = anthropic.send(params).await?;
 
-    match response {
-        ApiResponse::Success(success) => println!("{:#?}", success),
-        ApiResponse::Error(error) => println!("{:#?}", error),
+    match result {
+        Message::Success(success) => println!("{:#?}", success),
+        Message::Error(error) => println!("{:#?}", error),
     }
 
     Ok(())

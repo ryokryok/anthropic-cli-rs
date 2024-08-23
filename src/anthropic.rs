@@ -1,136 +1,130 @@
-pub mod v1 {
-    pub mod message {
-        use reqwest::{
-            header::{HeaderMap, CONTENT_TYPE},
-            Client, Response,
-        };
-        use serde::{Deserialize, Serialize};
+use reqwest::{
+    header::{HeaderMap, CONTENT_TYPE},
+    Client, Response,
+};
+use serde::{Deserialize, Serialize};
 
-        #[derive(Debug, Deserialize, Serialize)]
-        pub struct Message {
-            role: String,
-            content: String,
+#[derive(Debug, Deserialize, Serialize)]
+pub struct MessageParam {
+    role: String,
+    content: String,
+}
+
+impl MessageParam {
+    pub fn new(role: &str, content: &str) -> Self {
+        MessageParam {
+            role: role.to_string(),
+            content: content.to_string(),
         }
+    }
+}
 
-        impl Message {
-            pub fn new(role: &str, content: &str) -> Self {
-                Message {
-                    role: role.to_string(),
-                    content: content.to_string(),
-                }
-            }
+#[derive(Debug, Deserialize, Serialize)]
+pub struct MessageCreateParams {
+    // https://docs.anthropic.com/en/docs/about-claude/models#model-names
+    model: String,
+    max_tokens: usize,
+    messages: Vec<MessageParam>,
+}
+
+impl MessageCreateParams {
+    pub fn new(model: &str, max_tokens: usize, messages: Vec<MessageParam>) -> Self {
+        MessageCreateParams {
+            model: model.to_string(),
+            max_tokens,
+            messages,
         }
+    }
+}
 
-        #[derive(Debug, Deserialize, Serialize)]
-        pub struct RequestBody {
-            // https://docs.anthropic.com/en/docs/about-claude/models#model-names
-            model: String,
-            max_tokens: usize,
-            messages: Vec<Message>,
-        }
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Content {
+    pub text: String,
+    #[serde(rename = "type")]
+    pub content_type: String,
+}
 
-        impl RequestBody {
-            pub fn new(model: &str, max_tokens: usize, messages: Vec<Message>) -> Self {
-                RequestBody {
-                    model: model.to_string(),
-                    max_tokens,
-                    messages,
-                }
-            }
-        }
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Usage {
+    pub input_tokens: usize,
+    pub output_tokens: usize,
+}
 
-        #[derive(Debug, Deserialize, Serialize)]
-        pub struct Content {
-            pub text: String,
-            #[serde(rename = "type")]
-            pub content_type: String,
-        }
+#[derive(Debug, Deserialize, Serialize)]
+pub struct SuccessResponse {
+    pub content: Vec<Content>,
+    pub id: String,
+    pub model: String,
+    pub role: String,
+    pub stop_reason: String,
+    pub stop_sequence: Option<String>,
+    #[serde(rename = "type")]
+    pub response_type: String,
+    pub usage: Usage,
+}
 
-        #[derive(Debug, Deserialize, Serialize)]
-        pub struct Usage {
-            pub input_tokens: usize,
-            pub output_tokens: usize,
-        }
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ErrorInfo {
+    #[serde(rename = "type")]
+    pub error_type: String,
+    pub message: String,
+}
 
-        #[derive(Debug, Deserialize, Serialize)]
-        pub struct SuccessResponseBody {
-            pub content: Vec<Content>,
-            pub id: String,
-            pub model: String,
-            pub role: String,
-            pub stop_reason: String,
-            pub stop_sequence: Option<String>,
-            #[serde(rename = "type")]
-            pub response_type: String,
-            pub usage: Usage,
-        }
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ErrorResponse {
+    #[serde(rename = "type")]
+    pub error_type: String,
+    pub error: ErrorInfo,
+}
 
-        #[derive(Debug, Deserialize, Serialize)]
-        pub struct ErrorInfo {
-            #[serde(rename = "type")]
-            pub error_type: String,
-            pub message: String,
-        }
+pub enum Message {
+    Success(SuccessResponse),
+    Error(ErrorResponse),
+}
 
-        #[derive(Debug, Deserialize, Serialize)]
-        pub struct ErrorResponseBody {
-            #[serde(rename = "type")]
-            pub error_type: String,
-            pub error: ErrorInfo,
-        }
+const ANTHROPIC_URL: &str = "https://api.anthropic.com";
 
-        pub enum ApiResponse {
-            Success(SuccessResponseBody),
-            Error(ErrorResponseBody),
-        }
+fn build_client(api_key: &str) -> Result<reqwest::Client, reqwest::Error> {
+    let mut headers: HeaderMap = HeaderMap::new();
+    headers.insert("x-api-key", api_key.parse().unwrap());
+    headers.insert("anthropic-version", "2023-06-01".parse().unwrap());
+    headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
 
-        const ANTHROPIC_URL: &str = "https://api.anthropic.com";
+    let client = Client::builder().default_headers(headers).build()?;
 
-        fn build_client(api_key: &str) -> Result<reqwest::Client, reqwest::Error> {
-            let mut headers: HeaderMap = HeaderMap::new();
-            headers.insert("x-api-key", api_key.parse().unwrap());
-            headers.insert("anthropic-version", "2023-06-01".parse().unwrap());
-            headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
+    Ok(client)
+}
 
-            let client = Client::builder().default_headers(headers).build()?;
+async fn parse_response_body(response: Response) -> Result<Message, reqwest::Error> {
+    if response.status().is_success() {
+        let success_body: SuccessResponse = response.json().await?;
+        Ok(Message::Success(success_body))
+    } else {
+        let error_body: ErrorResponse = response.json().await?;
+        Ok(Message::Error(error_body))
+    }
+}
 
-            Ok(client)
-        }
+pub struct Anthropic {
+    client: Client,
+}
 
-        async fn parse_response_body(response: Response) -> Result<ApiResponse, reqwest::Error> {
-            if response.status().is_success() {
-                let success_body: SuccessResponseBody = response.json().await?;
-                Ok(ApiResponse::Success(success_body))
-            } else {
-                let error_body: ErrorResponseBody = response.json().await?;
-                Ok(ApiResponse::Error(error_body))
-            }
-        }
+impl Anthropic {
+    pub fn new(api_key: &str) -> Result<Self, reqwest::Error> {
+        let client = build_client(api_key)?;
 
-        pub struct ApiClient {
-            client: Client,
-        }
+        Ok(Anthropic { client })
+    }
 
-        impl ApiClient {
-            pub fn new(api_key: &str) -> Result<Self, reqwest::Error> {
-                let client = build_client(api_key)?;
-                Ok(ApiClient { client })
-            }
+    pub async fn send(&self, request_body: MessageCreateParams) -> Result<Message, reqwest::Error> {
+        let response = self
+            .client
+            .post(format!("{}/v1/messages", ANTHROPIC_URL))
+            .json(&request_body)
+            .send()
+            .await?;
 
-            pub async fn send(
-                &self,
-                request_body: RequestBody,
-            ) -> Result<ApiResponse, reqwest::Error> {
-                let response = self
-                    .client
-                    .post(format!("{}/v1/messages", ANTHROPIC_URL))
-                    .json(&request_body)
-                    .send()
-                    .await?;
-
-                let response_body = parse_response_body(response).await?;
-                Ok(response_body)
-            }
-        }
+        let response_body = parse_response_body(response).await?;
+        Ok(response_body)
     }
 }
