@@ -1,10 +1,10 @@
-use anthropic_cli_rs::anthropic::{Anthropic, Message, MessageCreateParams, MessageParam};
+use anthropic::{Anthropic, Message, MessageCreateParams, MessageParam};
 use dotenvy::dotenv;
-use reqwest;
-use std::env;
+
+use std::{env, error::Error};
 
 #[tokio::main]
-async fn main() -> Result<(), reqwest::Error> {
+async fn main() -> Result<(), Box<dyn Error>> {
     dotenv().ok();
 
     let api_key = env::var("API_KEY").unwrap();

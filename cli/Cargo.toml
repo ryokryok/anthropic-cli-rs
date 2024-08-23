@@ -1,0 +1,9 @@
+[package]
+edition = "2021"
+name = "cli"
+version = "0.1.0"
+
+[dependencies]
+anthropic = {path = "../anthropic"}
+dotenvy = "0.15.7"
+tokio = {version = "1", features = ["full"]}
