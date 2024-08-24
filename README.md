@@ -18,11 +18,12 @@ and replace `<YOUR_API_KEY>` with your Anthropic API keys.
 
 ## CLI
 
-```shell
+````shell
 # from project root
-cargo run cli
+cargo run --bin cli -- -p "Write react component for display tweet"
 ```
 
 ## license
 
 MIT
+````

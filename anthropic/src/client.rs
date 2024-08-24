@@ -38,11 +38,11 @@ impl Anthropic {
         Ok(Anthropic { client })
     }
 
-    pub async fn send(&self, request_body: MessageCreateParams) -> Result<Message, reqwest::Error> {
+    pub async fn send(&self, params: &MessageCreateParams) -> Result<Message, reqwest::Error> {
         let response = self
             .client
             .post(format!("{}/v1/messages", ANTHROPIC_URL))
-            .json(&request_body)
+            .json(params)
             .send()
             .await?;
 
