@@ -1,4 +1,8 @@
-use anthropic::*;
+use anthropic::{
+    request::{AnthropicRequest, Message, MessageContent, Role},
+    response::AnthropicResponse,
+    Anthropic,
+};
 use clap::Parser;
 use dotenvy::dotenv;
 use std::{env, error::Error};
@@ -23,10 +27,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     println!("> {}", args.prompt);
 
-    let params = MessageCreateParams::new(
+    let params = AnthropicRequest::new(
         "claude-3-5-sonnet-20240620",
         1024,
-        vec![MessageParam::new("user", &args.prompt)],
+        vec![Message::new(Role::User, MessageContent::new(&args.prompt))],
     );
 
     let client = Anthropic::new(&api_key)?;
@@ -34,14 +38,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let result = client.send(&params).await?;
 
     match result {
-        Message::Success(success) => {
+        AnthropicResponse::Message(success) => {
             if let Some(content) = success.content.first() {
                 println!("{}", content.text);
             } else {
                 println!("Received empty response from Claude");
             }
         }
-        Message::Error(error) => eprintln!("Error from Claude: {:#?}", error),
+        AnthropicResponse::Error(error) => eprintln!("Error from Claude: {:#?}", error),
     }
 
     Ok(())
