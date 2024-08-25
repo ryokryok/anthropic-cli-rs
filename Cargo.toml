@@ -1,5 +1,5 @@
 [workspace]
-members = ["anthropic", "cli"]
+members = ["anthropic", "acr"]
 package.authors = ["Mr_ozin"]
 package.edition = "2021"
 package.license = "MIT"
