@@ -1,11 +1,11 @@
 [package]
 edition = "2021"
 license = "MIT"
-name = "cli"
+name = "acr"
 version = "0.1.0"
 
 [dependencies]
 anthropic = {path = "../anthropic"}
-clap = { version = "4.5.16", features = ["derive"] }
+clap = {version = "4.5.16", features = ["derive"]}
 dotenvy = "0.15.7"
 tokio = {version = "1", features = ["full"]}

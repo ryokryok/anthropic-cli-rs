@@ -1,8 +1,6 @@
-# anthropic-cli-rs
+# acr - Anthropic cli by Rust
 
-WIP
-
-Anthropic API Client
+Call Anthropic API from cli.
 
 <https://docs.anthropic.com/en/api/messages>
 
@@ -18,7 +16,7 @@ and replace `<YOUR_API_KEY>` with your Anthropic API keys.
 
 ## CLI
 
-````shell
+```shell
 # from project root
 cargo run --bin cli -- -p "Write react component for display tweet"
 ```
@@ -26,4 +24,3 @@ cargo run --bin cli -- -p "Write react component for display tweet"
 ## license
 
 MIT
-````
