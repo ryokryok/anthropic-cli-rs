@@ -53,3 +53,63 @@ impl Anthropic {
         Ok(response_body)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+
+    #[tokio::test]
+    async fn test_simple_request() {
+        let mut server = mockito::Server::new_async().await;
+        let url = server.url();
+
+        let response_body = json!({
+            "content": [
+                {
+                    "text": "Hi! My name is Claude.",
+                    "type": "text"
+                }
+            ],
+            "id": "msg_013Zva2CMHLNnXjNJJKqJ2EF",
+            "model": "claude-3-5-sonnet-20240620",
+            "role": "assistant",
+            "stop_reason": "end_turn",
+            "stop_sequence": null,
+            "type": "message",
+            "usage": {
+                "input_tokens": 2095,
+                "output_tokens": 503
+            }
+        });
+
+        let _mock = server
+            .mock("POST", "/v1/messages")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(response_body.to_string())
+            .create_async()
+            .await;
+
+        let client = Anthropic::new("foobar", &url).unwrap();
+
+        let params = MessageCreateParams::new(
+            "claude-3-5-sonnet-20240620",
+            1024,
+            vec![MessageParam::new("user", "Hello, world")],
+        );
+
+        let result = client.send(&params).await.unwrap();
+
+        match result {
+            Message::Success(success) => {
+                let content = success.content.first().unwrap();
+                assert_eq!(content.text, "Hi! My name is Claude.");
+            }
+            Message::Error(_) => {
+                panic!("The response is an error");
+            }
+        }
+    }
+}
