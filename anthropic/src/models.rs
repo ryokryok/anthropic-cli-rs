@@ -16,16 +16,16 @@ impl MessageParam {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct MessageCreateParams {
+pub struct AnthropicRequest {
     // https://docs.anthropic.com/en/docs/about-claude/models#model-names
     model: String,
     max_tokens: usize,
     messages: Vec<MessageParam>,
 }
 
-impl MessageCreateParams {
+impl AnthropicRequest {
     pub fn new(model: &str, max_tokens: usize, messages: Vec<MessageParam>) -> Self {
-        MessageCreateParams {
+        AnthropicRequest {
             model: model.to_string(),
             max_tokens,
             messages,
@@ -73,7 +73,7 @@ pub struct ErrorResponse {
     pub error: ErrorInfo,
 }
 
-pub enum Message {
+pub enum AnthropicResponse {
     Success(SuccessResponse),
     Error(ErrorResponse),
 }

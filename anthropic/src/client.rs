@@ -16,13 +16,13 @@ fn build_client(api_key: &str) -> Result<reqwest::Client, reqwest::Error> {
     Ok(client)
 }
 
-async fn parse_response_body(response: Response) -> Result<Message, reqwest::Error> {
+async fn parse_response_body(response: Response) -> Result<AnthropicResponse, reqwest::Error> {
     if response.status().is_success() {
         let success_body: SuccessResponse = response.json().await?;
-        Ok(Message::Success(success_body))
+        Ok(AnthropicResponse::Success(success_body))
     } else {
         let error_body: ErrorResponse = response.json().await?;
-        Ok(Message::Error(error_body))
+        Ok(AnthropicResponse::Error(error_body))
     }
 }
 
@@ -41,7 +41,10 @@ impl Anthropic {
         })
     }
 
-    pub async fn send(&self, params: &MessageCreateParams) -> Result<Message, reqwest::Error> {
+    pub async fn send(
+        &self,
+        params: &AnthropicRequest,
+    ) -> Result<AnthropicResponse, reqwest::Error> {
         let response = self
             .client
             .post(format!("{}/v1/messages", self.base_url))
@@ -94,7 +97,7 @@ mod tests {
 
         let client = Anthropic::new("foobar", &url).unwrap();
 
-        let params = MessageCreateParams::new(
+        let params = AnthropicRequest::new(
             "claude-3-5-sonnet-20240620",
             1024,
             vec![MessageParam::new("user", "Hello, world")],
@@ -103,11 +106,11 @@ mod tests {
         let result = client.send(&params).await.unwrap();
 
         match result {
-            Message::Success(success) => {
+            AnthropicResponse::Success(success) => {
                 let content = success.content.first().unwrap();
                 assert_eq!(content.text, "Hi! My name is Claude.");
             }
-            Message::Error(_) => {
+            AnthropicResponse::Error(_) => {
                 panic!("The response is an error");
             }
         }
