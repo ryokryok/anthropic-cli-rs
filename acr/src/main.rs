@@ -21,8 +21,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let api_key = env::var("API_KEY").map_err(|_| "API_KEY not found in .env file")?;
 
-    println!("> {}", args.prompt);
-
     let params = MessageCreateParams::new(
         "claude-3-5-sonnet-20240620",
         1024,
@@ -36,7 +34,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     match result {
         Message::Success(success) => {
             if let Some(content) = success.content.first() {
-                println!("{}", content.text);
+                println!(
+                    "# {prompt}\n\n{content}",
+                    prompt = args.prompt,
+                    content = content.text
+                );
             } else {
                 println!("Received empty response from Claude");
             }
