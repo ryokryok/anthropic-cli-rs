@@ -4,7 +4,7 @@ use reqwest::{
 };
 
 use crate::constants::ANTHROPIC_URL;
-use crate::models::{request, response};
+use crate::models::*;
 
 fn build_client(api_key: &str) -> Result<reqwest::Client, reqwest::Error> {
     let mut headers: HeaderMap = HeaderMap::new();
@@ -17,15 +17,13 @@ fn build_client(api_key: &str) -> Result<reqwest::Client, reqwest::Error> {
     Ok(client)
 }
 
-async fn parse_response_body(
-    response: Response,
-) -> Result<response::AnthropicResponse, reqwest::Error> {
+async fn parse_response_body(response: Response) -> Result<Message, reqwest::Error> {
     if response.status().is_success() {
-        let success_body: response::MessageResponse = response.json().await?;
-        Ok(response::AnthropicResponse::Message(success_body))
+        let success_body: SuccessResponse = response.json().await?;
+        Ok(Message::Success(success_body))
     } else {
-        let error_body: response::ErrorResponse = response.json().await?;
-        Ok(response::AnthropicResponse::Error(error_body))
+        let error_body: ErrorResponse = response.json().await?;
+        Ok(Message::Error(error_body))
     }
 }
 
@@ -40,10 +38,7 @@ impl Anthropic {
         Ok(Anthropic { client })
     }
 
-    pub async fn send(
-        &self,
-        params: &request::AnthropicRequest,
-    ) -> Result<response::AnthropicResponse, reqwest::Error> {
+    pub async fn send(&self, params: &MessageCreateParams) -> Result<Message, reqwest::Error> {
         let response = self
             .client
             .post(format!("{}/v1/messages", ANTHROPIC_URL))
