@@ -3,7 +3,6 @@ use reqwest::{
     Client, Response,
 };
 
-use crate::constants::ANTHROPIC_URL;
 use crate::models::*;
 
 fn build_client(api_key: &str) -> Result<reqwest::Client, reqwest::Error> {
@@ -29,19 +28,23 @@ async fn parse_response_body(response: Response) -> Result<Message, reqwest::Err
 
 pub struct Anthropic {
     client: Client,
+    base_url: String,
 }
 
 impl Anthropic {
-    pub fn new(api_key: &str) -> Result<Self, reqwest::Error> {
+    pub fn new(api_key: &str, base_url: &str) -> Result<Self, reqwest::Error> {
         let client = build_client(api_key)?;
 
-        Ok(Anthropic { client })
+        Ok(Anthropic {
+            client,
+            base_url: base_url.to_string(),
+        })
     }
 
     pub async fn send(&self, params: &MessageCreateParams) -> Result<Message, reqwest::Error> {
         let response = self
             .client
-            .post(format!("{}/v1/messages", ANTHROPIC_URL))
+            .post(format!("{}/v1/messages", self.base_url))
             .json(params)
             .send()
             .await?;

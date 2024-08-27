@@ -29,7 +29,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         vec![MessageParam::new("user", &args.prompt)],
     );
 
-    let client = Anthropic::new(&api_key)?;
+    let client = Anthropic::new(&api_key, ANTHROPIC_URL)?;
 
     let result = client.send(&params).await?;
 
