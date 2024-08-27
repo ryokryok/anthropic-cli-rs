@@ -10,6 +10,9 @@ struct Args {
     /// Prompts to input to AI
     #[arg(short, long)]
     prompt: String,
+    /// AI model name.
+    #[arg(short, long, default_value = "claude-3-5-sonnet-20240620")]
+    model: String,
 }
 
 #[tokio::main]
@@ -22,7 +25,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let api_key = env::var("API_KEY").map_err(|_| "API_KEY not found in .env file")?;
 
     let params = MessageCreateParams::new(
-        "claude-3-5-sonnet-20240620",
+        &args.model,
         1024,
         vec![MessageParam::new("user", &args.prompt)],
     );
