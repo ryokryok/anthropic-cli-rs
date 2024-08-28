@@ -3,14 +3,51 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct MessageParam {
     role: String,
-    content: String,
+    content: ContentType,
+}
+
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(untagged)]
+pub enum ContentType {
+    Simple(String),
+    Complex(Vec<ContentItem>),
+}
+
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub struct ContentItem {
+    #[serde(rename = "type")]
+    item_type: String,
+    #[serde(flatten)]
+    data: ContentData,
+}
+
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(untagged)]
+pub enum ContentData {
+    Text { text: String },
+    Image { source: ImageSource },
+}
+
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub struct ImageSource {
+    #[serde(rename = "type")]
+    source_type: String,
+    media_type: String,
+    data: String,
 }
 
 impl MessageParam {
     pub fn new(role: &str, content: &str) -> Self {
         MessageParam {
             role: role.to_string(),
-            content: content.to_string(),
+            content: ContentType::Simple(content.to_string()),
+        }
+    }
+
+    pub fn new_complex(role: &str, content: Vec<ContentItem>) -> Self {
+        MessageParam {
+            role: role.to_string(),
+            content: ContentType::Complex(content),
         }
     }
 }
@@ -83,6 +120,62 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_simple_message_deserialize() {
+        let json = r#"{
+            "role": "user",
+            "content": "Hello, world"
+        }"#;
+        let result = serde_json::from_str::<MessageParam>(json).unwrap();
+        assert_eq!(result, MessageParam::new("user", "Hello, world"));
+    }
+
+    #[test]
+    fn test_complex_message_deserialize() {
+        let json = r#"{
+            "role": "user",
+            "content": [
+                {
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": "image/jpeg",
+                        "data": "/9j/4AAQSkZJRg..."
+                    }
+                },
+                {
+                    "type": "text",
+                    "text": "What is in this image?"
+                }
+            ]
+        }"#;
+        let result: MessageParam = serde_json::from_str::<MessageParam>(json).unwrap();
+        assert_eq!(
+            result,
+            MessageParam::new_complex(
+                "user",
+                vec![
+                    ContentItem {
+                        item_type: "image".to_string(),
+                        data: ContentData::Image {
+                            source: ImageSource {
+                                source_type: "base64".to_string(),
+                                media_type: "image/jpeg".to_string(),
+                                data: "/9j/4AAQSkZJRg...".to_string(),
+                            }
+                        }
+                    },
+                    ContentItem {
+                        item_type: "text".to_string(),
+                        data: ContentData::Text {
+                            text: "What is in this image?".to_string()
+                        }
+                    }
+                ]
+            )
+        );
+    }
+
+    #[test]
     fn test_request_deserialize() {
         let json = r#"{
             "model": "claude-3-5-sonnet-20240620",
@@ -102,7 +195,7 @@ mod tests {
                 max_tokens: 1024,
                 messages: vec![MessageParam {
                     role: "user".to_string(),
-                    content: "Hello, world".to_string()
+                    content: ContentType::Simple("Hello, world".to_string())
                 }]
             }
         );
