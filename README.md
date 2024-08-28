@@ -34,10 +34,22 @@ API_KEY=<YOUR_API_KEY>
 
 ## example
 
+### simple text
+
 ```shell
 acr -p "Hi, please tell me about you"
-> Hi, please tell me about you
-Hello! I'm an AI assistant created by Anthropic to be helpful, harmless, and honest. I don't have a physical form or avatar - I'm a language model trained to engage in conversations and help with tasks. I have broad knowledge that I can use to assist with all kinds of questions and topics, but my knowledge has a cutoff date and I can't access external information. I'm here to help in whatever way I can, while being clear that I'm an AI, not a human. Please let me know if you have any other questions!
+# Hi, please tell me about you
+
+Hello! I'm an AI assistant created by Anthropic to be helpful, ...
+```
+
+### describe image
+
+```shell
+acr -p "What is in this image?" -i image.jpg
+# What is in this image?
+
+This image is an iconic scene from ...
 ```
 
 ## license
