@@ -100,7 +100,7 @@ mod tests {
         let params = AnthropicRequest::new(
             "claude-3-5-sonnet-20240620",
             1024,
-            vec![MessageParam::new("user", "Hello, world")],
+            vec![MessageParam::new("user").text("Hello, world")],
         );
 
         let result = client.send(&params).await.unwrap();

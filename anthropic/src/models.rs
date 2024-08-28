@@ -3,14 +3,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct MessageParam {
     role: String,
-    content: ContentType,
-}
-
-#[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(untagged)]
-pub enum ContentType {
-    Simple(String),
-    Complex(Vec<ContentItem>),
+    content: Vec<ContentItem>,
 }
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -37,18 +30,36 @@ pub struct ImageSource {
 }
 
 impl MessageParam {
-    pub fn new(role: &str, content: &str) -> Self {
+    pub fn new(role: &str) -> Self {
+        let content: Vec<ContentItem> = Vec::new();
         MessageParam {
             role: role.to_string(),
-            content: ContentType::Simple(content.to_string()),
+            content,
         }
     }
 
-    pub fn new_complex(role: &str, content: Vec<ContentItem>) -> Self {
-        MessageParam {
-            role: role.to_string(),
-            content: ContentType::Complex(content),
-        }
+    pub fn text(mut self, text: &str) -> Self {
+        self.content.push(ContentItem {
+            item_type: "text".to_string(),
+            data: ContentData::Text {
+                text: text.to_string(),
+            },
+        });
+        self
+    }
+
+    pub fn image(mut self, media_type: &str, data: &str) -> Self {
+        self.content.push(ContentItem {
+            item_type: "image".to_string(),
+            data: ContentData::Image {
+                source: ImageSource {
+                    source_type: "base64".to_string(),
+                    media_type: media_type.to_string(),
+                    data: data.to_string(),
+                },
+            },
+        });
+        self
     }
 }
 
@@ -123,10 +134,15 @@ mod tests {
     fn test_simple_message_deserialize() {
         let json = r#"{
             "role": "user",
-            "content": "Hello, world"
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Hello, world"
+                }
+            ] 
         }"#;
         let result = serde_json::from_str::<MessageParam>(json).unwrap();
-        assert_eq!(result, MessageParam::new("user", "Hello, world"));
+        assert_eq!(result, MessageParam::new("user").text("Hello, world"));
     }
 
     #[test]
@@ -151,27 +167,9 @@ mod tests {
         let result: MessageParam = serde_json::from_str::<MessageParam>(json).unwrap();
         assert_eq!(
             result,
-            MessageParam::new_complex(
-                "user",
-                vec![
-                    ContentItem {
-                        item_type: "image".to_string(),
-                        data: ContentData::Image {
-                            source: ImageSource {
-                                source_type: "base64".to_string(),
-                                media_type: "image/jpeg".to_string(),
-                                data: "/9j/4AAQSkZJRg...".to_string(),
-                            }
-                        }
-                    },
-                    ContentItem {
-                        item_type: "text".to_string(),
-                        data: ContentData::Text {
-                            text: "What is in this image?".to_string()
-                        }
-                    }
-                ]
-            )
+            MessageParam::new("user")
+                .image("image/jpeg", "/9j/4AAQSkZJRg...")
+                .text("What is in this image?")
         );
     }
 
@@ -183,7 +181,12 @@ mod tests {
             "messages": [
                 {
                     "role": "user",
-                    "content": "Hello, world"
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Hello, world"
+                        }
+                    ]
                 }
             ]
         }"#;
@@ -195,7 +198,12 @@ mod tests {
                 max_tokens: 1024,
                 messages: vec![MessageParam {
                     role: "user".to_string(),
-                    content: ContentType::Simple("Hello, world".to_string())
+                    content: vec![ContentItem {
+                        item_type: "text".to_string(),
+                        data: ContentData::Text {
+                            text: "Hello, world".to_string()
+                        }
+                    }]
                 }]
             }
         );
@@ -205,7 +213,7 @@ mod tests {
             AnthropicRequest::new(
                 "claude-3-5-sonnet-20240620",
                 1024,
-                vec![MessageParam::new("user", "Hello, world")]
+                vec![MessageParam::new("user").text("Hello, world")]
             )
         );
     }
