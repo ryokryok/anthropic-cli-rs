@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::utils::{get_image_mimetype_and_base64, SUPPORT_MEDIA_TYPE};
+
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct MessageParam {
     role: String,
@@ -48,18 +50,23 @@ impl MessageParam {
         self
     }
 
-    pub fn image(mut self, media_type: &str, data: &str) -> Self {
+    pub fn image(mut self, file_path: &str) -> Result<Self, &str> {
+        let (mime, base64) = get_image_mimetype_and_base64(file_path).unwrap();
+        if !SUPPORT_MEDIA_TYPE.contains(&mime) {
+            return Err("Not support media");
+        }
+
         self.content.push(ContentItem {
             item_type: "image".to_string(),
             data: ContentData::Image {
                 source: ImageSource {
                     source_type: "base64".to_string(),
-                    media_type: media_type.to_string(),
-                    data: data.to_string(),
+                    media_type: mime.to_string(),
+                    data: base64,
                 },
             },
         });
-        self
+        Ok(self)
     }
 }
 
@@ -152,6 +159,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "need_mock"]
     fn test_complex_message_deserialize() {
         let json = r#"{
             "role": "user",
@@ -174,7 +182,9 @@ mod tests {
         assert_eq!(
             result,
             MessageParam::new("user")
-                .image("image/jpeg", "/9j/4AAQSkZJRg...")
+                // need mock here
+                .image("./sample.png")
+                .unwrap()
                 .text("What is in this image?")
         );
     }

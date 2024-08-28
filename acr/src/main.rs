@@ -13,6 +13,9 @@ struct Args {
     /// AI model name.
     #[arg(short, long, default_value = "claude-3-5-sonnet-20240620")]
     model: String,
+    /// Image
+    #[arg(short, long)]
+    image: Option<String>,
 }
 
 #[tokio::main]
@@ -24,8 +27,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let api_key = env::var("API_KEY").map_err(|_| "API_KEY not found in .env file")?;
 
-    let params = AnthropicRequest::new(&args.model, 1024)
-        .message(MessageParam::new("user").text(&args.prompt));
+    let messages = match args.image {
+        Some(path) => MessageParam::new("user").image(&path)?.text(&args.prompt),
+        None => MessageParam::new("user").text(&args.prompt),
+    };
+
+    let params = AnthropicRequest::new(&args.model, 1024).message(messages);
 
     let client = Anthropic::new(&api_key, ANTHROPIC_URL)?;
 
