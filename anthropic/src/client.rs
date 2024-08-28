@@ -97,11 +97,8 @@ mod tests {
 
         let client = Anthropic::new("foobar", &url).unwrap();
 
-        let params = AnthropicRequest::new(
-            "claude-3-5-sonnet-20240620",
-            1024,
-            vec![MessageParam::new("user").text("Hello, world")],
-        );
+        let params = AnthropicRequest::new("claude-3-5-sonnet-20240620", 1024)
+            .message(MessageParam::new("user").text("Hello, world"));
 
         let result = client.send(&params).await.unwrap();
 

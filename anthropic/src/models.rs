@@ -72,12 +72,18 @@ pub struct AnthropicRequest {
 }
 
 impl AnthropicRequest {
-    pub fn new(model: &str, max_tokens: usize, messages: Vec<MessageParam>) -> Self {
+    pub fn new(model: &str, max_tokens: usize) -> Self {
+        let messages: Vec<MessageParam> = Vec::new();
         AnthropicRequest {
             model: model.to_string(),
             max_tokens,
             messages,
         }
+    }
+
+    pub fn message(mut self, param: MessageParam) -> Self {
+        self.messages.push(param);
+        self
     }
 }
 
@@ -210,11 +216,8 @@ mod tests {
         // create struct from new method
         assert_eq!(
             result,
-            AnthropicRequest::new(
-                "claude-3-5-sonnet-20240620",
-                1024,
-                vec![MessageParam::new("user").text("Hello, world")]
-            )
+            AnthropicRequest::new("claude-3-5-sonnet-20240620", 1024)
+                .message(MessageParam::new("user").text("Hello, world"))
         );
     }
 

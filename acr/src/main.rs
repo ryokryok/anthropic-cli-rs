@@ -24,11 +24,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let api_key = env::var("API_KEY").map_err(|_| "API_KEY not found in .env file")?;
 
-    let params = AnthropicRequest::new(
-        &args.model,
-        1024,
-        vec![MessageParam::new("user").text(&args.prompt)],
-    );
+    let params = AnthropicRequest::new(&args.model, 1024)
+        .message(MessageParam::new("user").text(&args.prompt));
 
     let client = Anthropic::new(&api_key, ANTHROPIC_URL)?;
 
