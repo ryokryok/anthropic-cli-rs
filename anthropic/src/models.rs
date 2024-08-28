@@ -105,7 +105,16 @@ mod tests {
                     content: "Hello, world".to_string()
                 }]
             }
-        )
+        );
+        // create struct from new method
+        assert_eq!(
+            result,
+            AnthropicRequest::new(
+                "claude-3-5-sonnet-20240620",
+                1024,
+                vec![MessageParam::new("user", "Hello, world")]
+            )
+        );
     }
 
     #[test]
@@ -147,6 +156,6 @@ mod tests {
                     output_tokens: 503
                 }
             }
-        )
+        );
     }
 }
