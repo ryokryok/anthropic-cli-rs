@@ -1,7 +1,8 @@
 use anthropic::*;
+use base64::{engine::general_purpose, Engine};
 use clap::Parser;
 use dotenvy::dotenv;
-use std::{env, error::Error};
+use std::{env, error::Error, fs::File, io::Read};
 
 /// Call Anthropic API from cli.
 #[derive(Parser, Debug)]
@@ -28,7 +29,19 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let api_key = env::var("API_KEY").map_err(|_| "API_KEY not found in .env file")?;
 
     let messages = match args.image {
-        Some(path) => MessageParam::new("user").image(&path)?.text(&args.prompt),
+        Some(path) => {
+            let mut buffer = Vec::new();
+            File::open(&path)?
+                .read_to_end(&mut buffer)
+                .expect("Error: failed to read file.");
+            let file_type = infer::get(&buffer).unwrap();
+            let mime_type = file_type.mime_type();
+            let base64_string = general_purpose::STANDARD.encode(&buffer);
+
+            MessageParam::new("user")
+                .image(&mime_type, base64_string)
+                .text(&args.prompt)
+        }
         None => MessageParam::new("user").text(&args.prompt),
     };
 
