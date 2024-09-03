@@ -3,7 +3,7 @@ use reqwest::{
     Client, Response,
 };
 
-use crate::models::*;
+use crate::{models::*, ANTHROPIC_URL};
 
 fn build_client(api_key: &str) -> Result<reqwest::Client, reqwest::Error> {
     let mut headers: HeaderMap = HeaderMap::new();
@@ -32,13 +32,18 @@ pub struct Anthropic {
 }
 
 impl Anthropic {
-    pub fn new(api_key: &str, base_url: &str) -> Result<Self, reqwest::Error> {
+    pub fn new(api_key: &str) -> Result<Self, reqwest::Error> {
         let client = build_client(api_key)?;
 
         Ok(Anthropic {
             client,
-            base_url: base_url.to_string(),
+            base_url: ANTHROPIC_URL.to_string(),
         })
+    }
+
+    pub fn base_url(mut self, base_url: &str) -> Self {
+        self.base_url = base_url.to_string();
+        self
     }
 
     pub async fn send(
@@ -95,7 +100,7 @@ mod tests {
             .create_async()
             .await;
 
-        let client = Anthropic::new("foobar", &url).unwrap();
+        let client = Anthropic::new("foobar").unwrap().base_url(&url);
 
         let params = AnthropicRequest::new("claude-3-5-sonnet-20240620", 1024)
             .message(MessageParam::new("user").text("Hello, world"));

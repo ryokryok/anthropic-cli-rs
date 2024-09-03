@@ -34,9 +34,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let params = AnthropicRequest::new(&args.model, 1024).message(messages);
 
-    let client = Anthropic::new(&api_key, ANTHROPIC_URL)?;
-
-    let result = client.send(&params).await?;
+    let result = Anthropic::new(&api_key)?.send(&params).await?;
 
     match result {
         AnthropicResponse::Success(success) => {
