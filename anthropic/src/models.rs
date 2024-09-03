@@ -113,14 +113,14 @@ pub struct SuccessResponse {
     pub usage: Usage,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub struct ErrorInfo {
     #[serde(rename = "type")]
     pub error_type: String,
     pub message: String,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub struct ErrorResponse {
     #[serde(rename = "type")]
     pub error_type: String,
@@ -223,7 +223,7 @@ mod tests {
     }
 
     #[test]
-    fn test_response_deserialize() {
+    fn test_success_response_deserialize() {
         let json = r#"{
             "content": [
                 {
@@ -259,6 +259,28 @@ mod tests {
                 usage: Usage {
                     input_tokens: 2095,
                     output_tokens: 503
+                }
+            }
+        );
+    }
+
+    #[test]
+    fn test_error_response_deserialize() {
+        let json = r#"{        
+            "type": "error",
+            "error": {
+                "type": "invalid_request_error",
+                "message": "<string>"
+            }
+        }"#;
+        let result = serde_json::from_str::<ErrorResponse>(json).unwrap();
+        assert_eq!(
+            result,
+            ErrorResponse {
+                error_type: "error".to_string(),
+                error: ErrorInfo {
+                    error_type: "invalid_request_error".to_string(),
+                    message: "<string>".to_string()
                 }
             }
         );

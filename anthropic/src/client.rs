@@ -69,7 +69,7 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn test_simple_request() {
+    async fn test_success_request() {
         let mut server = mockito::Server::new_async().await;
         let url = server.url();
 
@@ -113,7 +113,48 @@ mod tests {
                 assert_eq!(content.text, "Hi! My name is Claude.");
             }
             AnthropicResponse::Error(_) => {
-                panic!("The response is an error");
+                panic!("The response should be success");
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_error_request() {
+        let mut server = mockito::Server::new_async().await;
+        let url = server.url();
+
+        let response_body = json!({
+            "type": "error",
+            "error": {
+                "type": "invalid_request_error",
+                "message": "<string>"
+            }
+        }
+        );
+
+        let _mock = server
+            .mock("POST", "/v1/messages")
+            .with_status(400)
+            .with_header("content-type", "application/json")
+            .with_body(response_body.to_string())
+            .create_async()
+            .await;
+
+        let client = Anthropic::new("foobar").unwrap().base_url(&url);
+
+        let params = AnthropicRequest::new("claude-3-5-sonnet-20240620", 1024)
+            .message(MessageParam::new("user").text("Hello, world"));
+
+        let result = client.send(&params).await.unwrap();
+
+        match result {
+            AnthropicResponse::Success(_) => {
+                panic!("The response should be error");
+            }
+            AnthropicResponse::Error(error) => {
+                assert_eq!(error.error_type, "error");
+                assert_eq!(error.error.error_type, "invalid_request_error");
+                assert_eq!(error.error.message, "<string>");
             }
         }
     }
