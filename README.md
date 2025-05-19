@@ -1,3 +1,10 @@
+Anthropic has officially released Claude Code. It offers better usability.
+This project was for learning purposes, so I will close it.
+
+<https://docs.anthropic.com/en/docs/claude-code/overview>
+
+---
+
 # acr - Anthropic cli by Rust
 
 Call Anthropic API from cli.
